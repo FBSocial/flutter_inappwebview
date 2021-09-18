@@ -79,7 +79,7 @@ class IOSWebStorageManager {
       dataTypesList.add(dataType.toValue());
     }
 
-    var timestamp = date.millisecondsSinceEpoch;
+    var timestamp = date.millisecondsSinceEpoch / 1000;
 
     Map<String, dynamic> args = <String, dynamic>{};
     args.putIfAbsent("dataTypes", () => dataTypesList);
