@@ -438,6 +438,9 @@ final public class InAppWebView extends InputAwareWebView implements InAppWebVie
 
         if (event.getAction() == MotionEvent.ACTION_UP) {
           checkScrollStoppedTask.run();
+          if(!InAppWebView.this.hasFocus()){
+            InAppWebView.this.requestFocus();
+          }
         }
 
         if (options.disableHorizontalScroll && options.disableVerticalScroll) {
