@@ -25,6 +25,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.ImageHeaderParser;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.model.GlideUrl;
+import com.bumptech.glide.load.model.LazyHeaderFactory;
+import com.bumptech.glide.load.model.LazyHeaders;
 import com.pichillilorenzo.flutter_inappwebview.Util;
 import com.pichillilorenzo.flutter_inappwebview.credential_database.CredentialDatabase;
 import com.pichillilorenzo.flutter_inappwebview.in_app_browser.InAppBrowserDelegate;
@@ -38,16 +44,25 @@ import com.pichillilorenzo.flutter_inappwebview.types.URLCredential;
 import com.pichillilorenzo.flutter_inappwebview.types.URLProtectionSpace;
 import com.pichillilorenzo.flutter_inappwebview.types.URLRequest;
 
+
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 import io.flutter.plugin.common.MethodChannel;
+
 
 public class InAppWebViewClient extends WebViewClient {
 
@@ -130,7 +145,7 @@ public class InAppWebViewClient extends WebViewClient {
     channel.invokeMethod("shouldOverrideUrlLoading", navigationAction.toMap(), new MethodChannel.Result() {
       @Override
       public void success(Object response) {
-        if (response != null) {                                                                                                                                           
+        if (response != null) {
           Map<String, Object> responseMap = (Map<String, Object>) response;
           Integer action = (Integer) responseMap.get("action");
           action = action != null ? action : NavigationActionPolicy.CANCEL.rawValue();
@@ -502,15 +517,15 @@ public class InAppWebViewClient extends WebViewClient {
           if (action != null) {
             switch (action) {
               case 1:
-                {
-                  InAppWebView webView = (InAppWebView) view;
-                  String certificatePath = (String) responseMap.get("certificatePath");
-                  String certificatePassword = (String) responseMap.get("certificatePassword");
-                  String androidKeyStoreType = (String) responseMap.get("androidKeyStoreType");
-                  Util.PrivateKeyAndCertificates privateKeyAndCertificates = Util.loadPrivateKeyAndCertificate(webView.plugin, certificatePath, certificatePassword, androidKeyStoreType);
-                  request.proceed(privateKeyAndCertificates.privateKey, privateKeyAndCertificates.certificates);
-                }
-                return;
+              {
+                InAppWebView webView = (InAppWebView) view;
+                String certificatePath = (String) responseMap.get("certificatePath");
+                String certificatePassword = (String) responseMap.get("certificatePassword");
+                String androidKeyStoreType = (String) responseMap.get("androidKeyStoreType");
+                Util.PrivateKeyAndCertificates privateKeyAndCertificates = Util.loadPrivateKeyAndCertificate(webView.plugin, certificatePath, certificatePassword, androidKeyStoreType);
+                request.proceed(privateKeyAndCertificates.privateKey, privateKeyAndCertificates.certificates);
+              }
+              return;
               case 2:
                 request.ignore();
                 return;
@@ -662,7 +677,33 @@ public class InAppWebViewClient extends WebViewClient {
         e.printStackTrace();
       }
     }
-    return response;
+
+    if(response != null) return response;
+
+    if(url.contains("boxcnGrDCqaOIhpHQ9myuSjxxby")){
+      Bitmap bitmap = null;
+      try {
+        String cookies = CookieManager.getInstance().getCookie("https://idreamsky.feishu.cn/docx/doxcnM8OiNbanhTUnx2w1uKQwUf?fb_redirect&open_type=mp");
+        GlideUrl glideUrl = new GlideUrl(url, new LazyHeaders.Builder()
+                .addHeader("Cookie",cookies)
+                .build());
+        bitmap = Glide.with(webView).asBitmap().diskCacheStrategy(DiskCacheStrategy.ALL).load(glideUrl).submit().get();
+      } catch (ExecutionException e) {
+        e.printStackTrace();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      return new WebResourceResponse("image/jpg", "UTF-8",getBitmapInputStream(bitmap, Bitmap.CompressFormat.JPEG));
+    }else{
+      return null;
+    }
+  }
+
+  private InputStream getBitmapInputStream(Bitmap bitmap, Bitmap.CompressFormat compressFormat){
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    bitmap.compress(compressFormat, 10, byteArrayOutputStream);
+    byte[] bitmapData = byteArrayOutputStream.toByteArray();
+    return new ByteArrayInputStream(bitmapData);
   }
 
   @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
